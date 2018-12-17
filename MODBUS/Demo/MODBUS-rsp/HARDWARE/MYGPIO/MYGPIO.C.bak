@@ -1,0 +1,40 @@
+#include<mygpio.h>
+/*******************************************************
+*-函数名称	：
+*-函数作用	：GPIO推挽模式
+*-参数		：
+*-返回值	：
+*-备注		：
+*******************************************************/
+void GPIO_OutPP_Init(GPIO_TypeDef* GPIOx,uint16_t GPIO_Pin)
+{
+    GPIO_InitTypeDef GPIO_TypeStruc;
+    RCC_APB2PeriphClockCmd(0X00000004<<(((u32)GPIOx-(u32)GPIOA)/0x400),ENABLE);
+
+    GPIO_TypeStruc.GPIO_Mode = GPIO_Mode_Out_PP;    //推挽
+    GPIO_TypeStruc.GPIO_Pin = GPIO_Pin;
+    GPIO_TypeStruc.GPIO_Speed = GPIO_Speed_50MHz;   
+    GPIO_Init(GPIOx,&GPIO_TypeStruc);
+
+        
+   
+}
+
+/*******************************************************
+*-函数名称	:
+*-函数作用:GPIO复用推挽模式
+*-参数	
+*-返回值	
+*-备注		：
+*******************************************************/
+void GPIO_AFPP_Init(GPIO_TypeDef* GPIOx,uint16_t GPIO_Pin)
+{
+    GPIO_InitTypeDef GPIO_TypeStruc;
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO|(0X00000004<<(((u32)GPIOx-(u32)GPIOA)/0x400)), ENABLE);    //端口复用时钟打开,GPIOA时钟
+  //  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3,ENABLE); //使能定时器
+    
+    GPIO_TypeStruc.GPIO_Mode = GPIO_Mode_AF_PP;    //复用推挽
+    GPIO_TypeStruc.GPIO_Pin = GPIO_Pin;
+    GPIO_TypeStruc.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOx,&GPIO_TypeStruc);
+}

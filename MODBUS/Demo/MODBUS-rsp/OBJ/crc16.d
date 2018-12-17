@@ -1,0 +1,2 @@
+..\obj\crc16.o: ..\HARDWARE\MODBUS\CRC16.C
+..\obj\crc16.o: ..\HARDWARE\MODBUS\CRC16.H

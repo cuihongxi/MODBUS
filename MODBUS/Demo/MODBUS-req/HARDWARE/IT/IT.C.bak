@@ -1,0 +1,191 @@
+#include "IT.H"
+
+
+/*******************************************************
+*-函数名称	：
+*-函数作用	：使能相应的定时器时钟
+*-参数		：
+*-返回值	：
+*-备注		：
+*******************************************************/
+
+void RCC_Time(TIM_TypeDef* TIMx)
+{
+
+    if(TIMx == TIM1)RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
+    if(TIMx == TIM2)RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+    if(TIMx == TIM3)RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+    if(TIMx == TIM4)RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+    if(TIMx == TIM5)RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
+    if(TIMx == TIM6)RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
+    if(TIMx == TIM7)RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM7, ENABLE);
+    if(TIMx == TIM8)RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE);
+    if(TIMx == TIM9)RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);
+    if(TIMx == TIM10)RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM10, ENABLE);
+    if(TIMx == TIM11)RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM11, ENABLE);
+    if(TIMx == TIM12)RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM12, ENABLE) ;
+    if(TIMx == TIM13)RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM13, ENABLE) ;
+    if(TIMx == TIM14)RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, ENABLE) ;
+    if(TIMx == TIM15)RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM15, ENABLE) ;
+    if(TIMx == TIM16)RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM16, ENABLE) ;
+    if(TIMx == TIM17)RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM17, ENABLE) ;   
+}
+
+/*******************************************************
+*-函数名称	：
+*-函数作用	：中断优先级设置
+*-参数		：preemption 抢占优先级，sub 从优先级
+*-返回值	：
+*-备注		：函数中默认2个抢占2个从优先级
+*******************************************************/
+void NVIC_ITInit(TIM_TypeDef* TIMx,u8 preemption,u8 sub)
+{
+    NVIC_InitTypeDef NVIC_InitStruct;
+    if(TIMx ==TIM2) NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
+    if(TIMx ==TIM3) NVIC_InitStruct.NVIC_IRQChannel = TIM3_IRQn;
+    if(TIMx ==TIM4) NVIC_InitStruct.NVIC_IRQChannel = TIM4_IRQn;
+    //NVIC_InitStruct.NVIC_IRQChannel = NVIC_IRQChannel;
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = preemption; 
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = sub;
+    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;                        //使能 
+    
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);                     //设置2抢占优先级2从优先级
+    NVIC_Init(&NVIC_InitStruct);
+}
+
+/*******************************************************
+*-函数名称	：
+*-函数作用	：通用定时器配置，T2~T7
+*-参数		：arr为自动重装值，psc为分频系数，TIMx为定时器编号（TIM2~7）
+*-返回值	：
+*-备注		：默认使用内部时钟源，本函数使用了内部时钟更加精确
+*******************************************************/
+void IT_Config(TIM_TypeDef* TIMx,u16 Period,u16 Prescaler) //Period为自动重装值，Prescaler为分频系数，72M/Prescaler为1秒定时器时钟跳动的次数
+{
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+
+		RCC_Time(TIMx);                                                     //使能时钟
+   // RCC_APB1PeriphResetCmd(RCC_APB1Periph_TIM2, ENABLE);
+    
+    TIM_DeInit(TIMx);                                                   //将外设 TIMx 寄存器重设为缺省值
+    TIM_InternalClockConfig(TIMx);                                      //使用内部时钟，更加精确
+    
+    TIM_TimeBaseInitStruct.TIM_Prescaler = Prescaler;                   //设置分频系数
+		TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;      //向上计数
+		TIM_TimeBaseInitStruct.TIM_Period = Period;                         //预装载值
+    TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+
+    TIM_TimeBaseInit(TIMx,&TIM_TimeBaseInitStruct);                     //初始化时基
+    
+    TIM_ClearFlag(TIMx,TIM_FLAG_Update);                                 //清除标志位
+		TIM_ITConfig(TIMx,TIM_IT_Update,ENABLE);	                        //开启定时器中断
+		TIM_Cmd(TIMx,ENABLE);                                                      //使能定时器
+    TIM_PrescalerConfig(TIMx,Prescaler,TIM_PSCReloadMode_Immediate);//立即装载预分频值
+}
+
+/*******************************************************
+*-函数名称	：
+*-函数作用	：初始化输出比较参数
+*-参数		：Pulse 比较值 Cannel通道号
+*-返回值	：
+*-备注		：
+*******************************************************/
+
+void TIM_OC_Init(TIM_TypeDef* TIMx,u16 Pulse,u8 Cannel)
+{
+		TIM_OCInitTypeDef TIM_OCInitTypeStruc;
+		TIM_OCInitTypeStruc.TIM_OCMode = TIM_OCMode_PWM2 ;  //少于值为低电平
+		TIM_OCInitTypeStruc.TIM_Pulse = Pulse;//占空比
+    TIM_OCInitTypeStruc.TIM_OCPolarity = TIM_OCPolarity_Low;   //输出比较极性为低
+    TIM_OCInitTypeStruc.TIM_OutputState = TIM_OutputState_Enable;//使能输出
+    
+			switch (Cannel)
+			{
+				case 1:			TIM_OC1Init(TIMx, &TIM_OCInitTypeStruc);
+										TIM_OC1PreloadConfig(TIMx,TIM_OCPreload_Enable);	//使能预装载
+				break;
+				case 2:			TIM_OC2Init(TIMx, &TIM_OCInitTypeStruc);
+										TIM_OC2PreloadConfig(TIMx,TIM_OCPreload_Enable);	//使能预装载
+					break;
+				case 3:			TIM_OC3Init(TIMx, &TIM_OCInitTypeStruc);
+										TIM_OC3PreloadConfig(TIMx,TIM_OCPreload_Enable);	//使能预装载
+					break;
+				case 4:			TIM_OC4Init(TIMx, &TIM_OCInitTypeStruc);
+										TIM_OC4PreloadConfig(TIMx,TIM_OCPreload_Enable);	//使能预装载
+					break;
+
+			};
+}
+/*******************************************************
+*-函数名称	：
+*-函数作用	: 初始化PWM
+*-参数		：Period周期，Prescaler分频系数，Pulse 占空比
+*-返回值	：
+*-备注		：
+*******************************************************/
+void TIME_PWM_init(TIM_TypeDef* TIMx,u16 Period,u16 Prescaler,GPIO_TypeDef* GPIOx,uint16_t GPIO_Pin,u16 Pulse,u8 Cannel)
+{
+		
+		// 初始化GPIO复用推挽模式
+		GPIO_AFPP_Init(GPIOx,GPIO_Pin);
+		//初始化定时器
+    IT_Config(TIMx,Period,Prescaler);
+		//初始化输出比较参数 
+		TIM_OC_Init(TIMx,Pulse,Cannel);
+}
+/*******************************************************
+*-函数名称	：
+*-函数作用	：设置占空比
+*-参数		：ratio占空比（0~100）
+*-返回值	：
+*-备注		：
+*******************************************************/
+void PWM_SetCompare(TIM_TypeDef* TIMx,u16 Pulse,u8 Cannel)
+{
+	switch (Cannel)
+	{
+		case 1:			TIM_SetCompare1(TIMx,Pulse);
+		break;
+		case 2:			TIM_SetCompare2(TIMx,Pulse);
+			break;
+		case 3:			TIM_SetCompare3(TIMx,Pulse);
+			break;
+		case 4:			TIM_SetCompare4(TIMx,Pulse);
+			break;
+	}
+}
+
+
+	
+void PWM_init(PWM_Struct* pwm_stru)
+{
+		
+		// 初始化GPIO复用推挽模式
+		GPIO_AFPP_Init(pwm_stru->GPIOx,pwm_stru->GPIO_Pin);
+		//初始化定时器
+    IT_Config(pwm_stru->TIMx,pwm_stru->Period,pwm_stru->Prescaler);
+		//初始化输出比较参数 
+		TIM_OC_Init(pwm_stru->TIMx,pwm_stru->Pulse,pwm_stru->Cannel);
+}
+
+void PWM_TIMSetCompare(PWM_Struct* pwm_stru,u16 Pulse)
+{
+	switch (pwm_stru->Cannel)
+	{
+		case 1:			TIM_SetCompare1(pwm_stru->TIMx,pwm_stru->Pulse);
+		break;
+		case 2:			TIM_SetCompare2(pwm_stru->TIMx,pwm_stru->Pulse);
+			break;
+		case 3:			TIM_SetCompare3(pwm_stru->TIMx,pwm_stru->Pulse);
+			break;
+		case 4:			TIM_SetCompare4(pwm_stru->TIMx,pwm_stru->Pulse);
+			break;
+	}
+}
+
+
+
+
+
+
+

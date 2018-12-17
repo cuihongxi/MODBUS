@@ -1,0 +1,22 @@
+#ifndef __IT__H__
+#define __IT__H__
+#include "stm32f10x.h"
+#include<stm32f10x_tim.h>
+#include<MYGPIO.H>
+typedef struct 
+	{
+		TIM_TypeDef* TIMx;  
+		u16 Period;			//周期
+		u16 Prescaler;	//分频系数
+		GPIO_TypeDef* GPIOx;
+		uint16_t GPIO_Pin;
+		u16 Pulse;	//占空比
+		u8 Cannel;	//通道号
+	}PWM_Struct;
+void NVIC_ITInit(TIM_TypeDef* TIMx,u8 preemption,u8 sub); //中断优先级设置，默认是2抢占2从优先级
+void IT_Config(TIM_TypeDef* TIMx,u16 Period,u16 Prescaler); //Period为自动重装值，Prescaler为分频系数，72M/Prescaler为1秒定时器时钟跳动的次数
+//void TIME_PWM_init(TIM_TypeDef* TIMx,u16 Period,u16 Prescaler,GPIO_TypeDef* GPIOx,uint16_t GPIO_Pin,u8 ratio,u8 Cannel);//定时器PWM初始化
+//void PWM_SetCompare(TIM_TypeDef* TIMx,u16 Period,u8 ratio,u8 Cannel);//设置PWM的值
+void PWM_init(PWM_Struct* pwm_stru);
+void PWM_TIMSetCompare(PWM_Struct* pwm_stru,u8 ratio);
+#endif
